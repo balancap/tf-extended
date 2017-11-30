@@ -1,3 +1,4 @@
 # Python crap!
 __pycache__
 layers/__pycache__
+*.pyc
