@@ -21,8 +21,53 @@ from tensorflow.contrib.framework.python.ops import add_arg_scope
 slim = tf.contrib.slim
 
 # =========================================================================== #
+# Tools...
+# =========================================================================== #
+
+def _get_dimension(shape, dim, min_rank=1):
+    """Returns the `dim` dimension of `shape`, while checking it has `min_rank`.
+    Args:
+        shape: A `TensorShape`.
+        dim: Integer, which dimension to return.
+        min_rank: Integer, minimum rank of shape.
+    Returns:
+        The value of the `dim` dimension.
+    Raises:
+        ValueError: if inputs don't have at least min_rank dimensions, or if the
+            first dimension value is not defined.
+    """
+    dims = shape.dims
+    if dims is None:
+        raise ValueError('dims of shape must be known but is None')
+    if len(dims) < min_rank:
+        raise ValueError('rank of shape must be at least %d not: %d' % (min_rank,
+                                                                        len(dims)))
+    value = dims[dim].value
+    if value is None:
+        raise ValueError(
+            'dimension %d of shape must be known but is None: %s' % (dim, shape))
+    return value
+
+
+# =========================================================================== #
 # Extension of TensorFlow common layers.
 # =========================================================================== #
+@add_arg_scope
+def channel_dimension(shape, data_format, min_rank=1):
+    """Returns the channel dimension of shape, while checking it has min_rank.
+    Args:
+        shape: A `TensorShape`.
+        data_format: `NCHW` or `NHWC`.
+        min_rank: Integer, minimum rank of shape.
+    Returns:
+         value of the first dimension.
+    Raises:
+        ValueError: if inputs don't have at least min_rank dimensions, or if the
+            first dimension value is not defined.
+    """
+    return _get_dimension(shape, 1 if data_format == 'NCHW' else -1,
+                          min_rank=min_rank)
+
 @add_arg_scope
 def channel_to_last(inputs, data_format='NHWC', scope=None):
     """Move the channel axis to the last dimension. Allows to
@@ -154,3 +199,4 @@ def batch_norm(inputs,
     if activation_fn is not None:
         outputs = activation_fn(outputs)
     return outputs
+
