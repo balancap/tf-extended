@@ -19,7 +19,8 @@ from __future__ import print_function
 
 from tensorflow.python.data.ops import dataset_ops
 from tensorflow.python.data.util import nest
-from tensorflow.python.data.util import sparse
+# from tensorflow.python.data.util import sparse
+from . import sparse
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import function
 from tensorflow.python.framework import ops
