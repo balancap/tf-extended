@@ -37,21 +37,28 @@ class ParallelInterleaveDataset(dataset_ops.Dataset):
     super(ParallelInterleaveDataset, self).__init__()
     self._input_dataset = input_dataset
 
+    # Hack to get around output_classes.
+    def dataset_output_classes(dataset):
+      try:
+        return input_dataset.output_classes
+      except AttributeError:
+        return sparse.get_classes(dataset._tensors)
+
     @function.Defun(*nest.flatten(
         sparse.as_dense_types(input_dataset.output_types,
-                              input_dataset.output_classes)))
+                              dataset_output_classes(input_dataset))))
     def tf_map_func(*args):
       """A wrapper for Defun that facilitates shape inference."""
       # Pass in shape information from the input_dataset.
       dense_shapes = sparse.as_dense_shapes(input_dataset.output_shapes,
-                                            input_dataset.output_classes)
+                                            dataset_output_classes(input_dataset))
       for arg, shape in zip(args, nest.flatten(dense_shapes)):
         arg.set_shape(shape)
 
       nested_args = nest.pack_sequence_as(input_dataset.output_types, args)
       nested_args = sparse.deserialize_sparse_tensors(
           nested_args, input_dataset.output_types, input_dataset.output_shapes,
-          input_dataset.output_classes)
+          dataset_output_classes(input_dataset))
       if dataset_ops._should_unpack_args(nested_args):  # pylint: disable=protected-access
         dataset = map_func(*nested_args)
       else:
@@ -60,7 +67,7 @@ class ParallelInterleaveDataset(dataset_ops.Dataset):
       if not isinstance(dataset, dataset_ops.Dataset):
         raise TypeError("`map_func` must return a `Dataset` object.")
 
-      self._output_classes = dataset.output_classes
+      self._output_classes = dataset_output_classes(dataset)
       self._output_types = dataset.output_types
       self._output_shapes = dataset.output_shapes
 
