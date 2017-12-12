@@ -28,6 +28,16 @@ from tensorflow.python.ops import gen_dataset_ops
 from tensorflow.python.util import deprecation
 
 
+# Hack to get around output_classes.
+def dataset_output_classes(dataset):
+  try:
+    return dataset.output_classes
+  except AttributeError:
+    try:
+      return sparse.get_classes(dataset._tensors)
+    except AttributeError:
+      return ops.Tensor
+
 class ParallelInterleaveDataset(dataset_ops.Dataset):
   """A `Dataset` that maps a function over its input and flattens the result."""
 
@@ -36,16 +46,6 @@ class ParallelInterleaveDataset(dataset_ops.Dataset):
     """See `tf.contrib.data.parallel_interleave()` for details."""
     super(ParallelInterleaveDataset, self).__init__()
     self._input_dataset = input_dataset
-
-    # Hack to get around output_classes.
-    def dataset_output_classes(dataset):
-      try:
-        return input_dataset.output_classes
-      except AttributeError:
-        try:
-          return sparse.get_classes(dataset._tensors)
-        except AttributeError:
-          return ops.Tensor
 
     @function.Defun(*nest.flatten(
         sparse.as_dense_types(input_dataset.output_types,
