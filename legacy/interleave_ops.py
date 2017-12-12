@@ -42,7 +42,10 @@ class ParallelInterleaveDataset(dataset_ops.Dataset):
       try:
         return input_dataset.output_classes
       except AttributeError:
-        return sparse.get_classes(dataset._tensors)
+        try:
+          return sparse.get_classes(dataset._tensors)
+        except AttributeError:
+          return ops.Tensor
 
     @function.Defun(*nest.flatten(
         sparse.as_dense_types(input_dataset.output_types,
