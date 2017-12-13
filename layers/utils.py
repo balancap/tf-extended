@@ -100,6 +100,23 @@ def concat_channels(l_inputs, data_format='NHWC', scope=None):
             net = tf.concat(l_inputs, axis=1)
         return net
 
+
+@add_arg_scope
+def split_channels(inputs, nsplits, data_format='NHWC', scope=None):
+    """Split a tensor on the channel axis.
+
+    Args:
+      inputs: List Tensors;
+      data_format: NHWC or NCHW.
+    """
+    with tf.name_scope(scope, 'split_channels', inputs):
+        if data_format == 'NHWC':
+            nets = tf.split(inputs, nsplits, axis=3)
+        elif data_format == 'NCHW':
+            nets = tf.split(inputs, nsplits, axis=1)
+        return nets
+
+
 @add_arg_scope
 def pad2d(inputs,
           pad=(0, 0),
