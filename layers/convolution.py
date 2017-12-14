@@ -150,7 +150,7 @@ def depthwise_convolution2d(
                                                   regularizer=biases_regularizer,
                                                   trainable=trainable,
                                                   collections=biases_collections)
-                outputs = nn.bias_add(outputs, biases)
+                outputs = nn.bias_add(outputs, biases, data_format=data_format)
         if activation_fn is not None:
             outputs = activation_fn(outputs)
         return utils.collect_named_outputs(outputs_collections,
