@@ -61,17 +61,18 @@ def sparse_softmax_cross_entropy(
                        (logits, labels, weights)) as scope:
         # labels, logits, weights = _remove_squeezable_dimensions(
         #     labels, logits, weights, expected_rank_diff=1)
-        losses = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels,
-                                                                logits=logits,
-                                                                name="xentropy")
-        # Label smoothing.
-        if label_smoothing > 0:
-            num_classes = logits.get_shape().as_list()[-1]
-            losses = tf.scalar_mul(1. - label_smoothing, losses)
-            # Label smoothing loss.
-            smooth_loss = tf.reduce_sum(logits, axis=-1, keep_dims=False)
-            smooth_loss = tf.scalar_mul(label_smoothing / num_classes, smooth_loss)
-            losses = tf.add_n([losses, smooth_loss])
+        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            labels=labels, logits=logits, name="xentropy")
+        loss = tf.losses.compute_weighted_loss(
+            loss, weights, scope, loss_collection, reduction=reduction)
 
-        return tf.losses.compute_weighted_loss(
-            losses, weights, scope, loss_collection, reduction=reduction)
+        # Label smoothing.
+        smooth_loss = 0.
+        if label_smoothing > 0:
+            loss = tf.scalar_mul(1. - label_smoothing, loss)
+            # Label smoothing loss: sum of logits * weight.
+            smooth_loss = tf.losses.compute_weighted_loss(
+                logits, label_smoothing * weights,
+                'label_smoothing', loss_collection, reduction=reduction)
+
+        return loss + smooth_loss
