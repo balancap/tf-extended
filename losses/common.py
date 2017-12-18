@@ -70,9 +70,10 @@ def sparse_softmax_cross_entropy(
         smooth_loss = 0.
         if label_smoothing > 0:
             loss = tf.scalar_mul(1. - label_smoothing, loss)
+            aux_log_softmax = -tf.nn.log_softmax(logits)
             # Label smoothing loss: sum of logits * weight.
             smooth_loss = tf.losses.compute_weighted_loss(
-                logits, label_smoothing * weights,
+                aux_log_softmax, label_smoothing * weights,
                 'label_smoothing', loss_collection, reduction=reduction)
 
         return loss + smooth_loss
