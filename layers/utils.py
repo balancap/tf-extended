@@ -217,3 +217,17 @@ def batch_norm(inputs,
         outputs = activation_fn(outputs)
     return outputs
 
+@add_arg_scope
+def drop_path(inputs, keep_prob, is_training=True, scope=None):
+    """Drops out a whole example hiddenstate with the specified probability.
+    """
+    with tf.name_scope(scope, 'drop_path', [inputs]):
+        net = inputs
+        if is_training:
+            batch_size = tf.shape(net)[0]
+            noise_shape = [batch_size, 1, 1, 1]
+            random_tensor = keep_prob
+            random_tensor += tf.random_uniform(noise_shape, dtype=tf.float32)
+            binary_tensor = tf.floor(random_tensor)
+            net = tf.div(net, keep_prob) * binary_tensor
+        return net
