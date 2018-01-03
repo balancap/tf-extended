@@ -109,7 +109,7 @@ def split_channels(inputs, nsplits, data_format='NHWC', scope=None):
       inputs: List Tensors;
       data_format: NHWC or NCHW.
     """
-    with tf.name_scope(scope, 'split_channels', inputs):
+    with tf.name_scope(scope, 'split_channels', [inputs]):
         if data_format == 'NHWC':
             nets = tf.split(inputs, nsplits, axis=3)
         elif data_format == 'NCHW':
