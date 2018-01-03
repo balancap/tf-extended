@@ -84,6 +84,64 @@ def channel_to_last(inputs, data_format='NHWC', scope=None):
             net = tf.transpose(inputs, perm=(0, 2, 3, 1))
         return net
 
+@add_arg_scope
+def to_nhwc(inputs, data_format='NHWC', scope=None):
+    """Move the channel axis to the last dimension. Allows to
+    provide a consistent NHWC output format whatever the input data format.
+
+    Args:
+      inputs: Input Tensor;
+      data_format: NHWC or NCHW.
+    """
+    with tf.name_scope(scope, 'to_nhwc', [inputs]):
+        if data_format == 'NHWC':
+            net = inputs
+        elif data_format == 'NCHW':
+            net = tf.transpose(inputs, perm=(0, 2, 3, 1))
+        return net
+
+@add_arg_scope
+def to_nchw(inputs, data_format='NHWC', scope=None):
+    """Move the channel axis to the last dimension. Allows to
+    provide a consistent NHWC output format whatever the input data format.
+
+    Args:
+      inputs: Input Tensor;
+      data_format: NHWC or NCHW.
+    """
+    with tf.name_scope(scope, 'to_nchw', [inputs]):
+        if data_format == 'NHWC':
+            net = tf.transpose(inputs, perm=(0, 3, 1, 2))
+        elif data_format == 'NCHW':
+            net = inputs
+        return net
+
+@add_arg_scope
+def channel_to_hw(inputs, factors=[1, 1], data_format='NHWC', scope=None):
+    """Move the channel axis to the last dimension. Allows to
+    provide a consistent NHWC output format whatever the input data format.
+
+    Args:
+      inputs: Input Tensor;
+      data_format: NHWC or NCHW.
+    """
+    with tf.name_scope(scope, 'channel_to_hw', [inputs]):
+        net = inputs
+        if factors[0] == 1 and factors[1] == 1:
+            return net
+
+        if data_format == 'NCHW':
+            net = tf.transpose(net, perm=(0, 2, 3, 1))
+        # Inputs in NHWC format.
+        shape = net.get_shape().as_list()
+        shape[1] = int(shape[1] / factors[0])
+        shape[2] = int(shape[2] / factors[1])
+        shape[3] = -1
+        net = tf.reshape(net, shape)
+        # Original format.
+        if data_format == 'NCHW':
+            net = tf.transpose(net, perm=(0, 3, 1, 2))
+        return net
 
 @add_arg_scope
 def concat_channels(l_inputs, data_format='NHWC', scope=None):
@@ -100,7 +158,6 @@ def concat_channels(l_inputs, data_format='NHWC', scope=None):
             net = tf.concat(l_inputs, axis=1)
         return net
 
-
 @add_arg_scope
 def split_channels(inputs, nsplits, data_format='NHWC', scope=None):
     """Split a tensor on the channel axis.
@@ -115,7 +172,6 @@ def split_channels(inputs, nsplits, data_format='NHWC', scope=None):
         elif data_format == 'NCHW':
             nets = tf.split(inputs, nsplits, axis=1)
         return nets
-
 
 @add_arg_scope
 def pad2d(inputs,
